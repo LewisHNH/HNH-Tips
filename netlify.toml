@@ -1,0 +1,11 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+  functions = "netlify/functions"
+
+# Single-page app: every route that isn't the API or a real file
+# falls through to index.html.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
