@@ -9,5 +9,5 @@
   from = "/*"
   to = "/index.html"
   status = 200
-[functions."hnh-brief"]
+[functions."hnh-cron"]
   schedule = "45 5,6 * * *"
