@@ -9,3 +9,5 @@
   from = "/*"
   to = "/index.html"
   status = 200
+[functions."hnh-brief"]
+  schedule = "45 5,6 * * *"
