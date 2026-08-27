@@ -15,4 +15,6 @@
   schedule = "0 11,20 * * *"
 [functions."hnh-weekly"]
   schedule = "0 19 * * 0"
+[functions."hnh-scheduler"]
+  schedule = "*/5 * * * *"
 
