@@ -38,3 +38,72 @@
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
+<script>
+(function () {
+  var ENDPOINT = '/.netlify/functions/hnh-track';
+
+  // UTM tags survive the whole session, so a click from TikTok still gets
+  // attributed when the person converts three pages later.
+  var params = new URLSearchParams(location.search);
+  var utm = {
+    utm_source: params.get('utm_source'),
+    utm_medium: params.get('utm_medium'),
+    utm_campaign: params.get('utm_campaign')
+  };
+  try {
+    if (utm.utm_source) sessionStorage.setItem('hnh_utm', JSON.stringify(utm));
+    else {
+      var saved = sessionStorage.getItem('hnh_utm');
+      if (saved) utm = JSON.parse(saved);
+    }
+  } catch (e) { /* private browsing - carry on without it */ }
+
+  function hit(event, extra) {
+    try {
+      var body = {
+        event: event,
+        path: location.pathname,
+        ref: document.referrer || null,
+        utm_source: utm.utm_source,
+        utm_medium: utm.utm_medium,
+        utm_campaign: utm.utm_campaign
+      };
+      if (extra) for (var k in extra) body[k] = extra[k];
+
+      var payload = JSON.stringify(body);
+      if (navigator.sendBeacon) {
+        navigator.sendBeacon(ENDPOINT, new Blob([payload], { type: 'application/json' }));
+      } else {
+        fetch(ENDPOINT, { method: 'POST', body: payload, keepalive: true });
+      }
+    } catch (e) { /* tracking must never break the site */ }
+  }
+
+  function pageView() {
+    hit('page_view');
+    var p = location.pathname.toLowerCase();
+    if (p.indexOf('tip') > -1) hit('tips_view');
+    if (p.indexOf('result') > -1) hit('results_view');
+  }
+
+  pageView();
+
+  // Single-page app: patch history so route changes count as views.
+  var push = history.pushState;
+  history.pushState = function () {
+    push.apply(this, arguments);
+    setTimeout(pageView, 0);
+  };
+  window.addEventListener('popstate', pageView);
+
+  // Outbound clicks - the ones that actually matter.
+  document.addEventListener('click', function (e) {
+    var a = e.target && e.target.closest ? e.target.closest('a') : null;
+    if (!a || !a.href) return;
+    var h = a.href.toLowerCase();
+    if (h.indexOf('whop.com') > -1) hit('checkout_click');
+    else if (h.indexOf('t.me') > -1) hit('telegram_click', { target: a.href });
+  }, true);
+})();
+</script>
+
